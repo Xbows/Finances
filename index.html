@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mawazin · Personal Finance</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body { background: #000; color: #f0f0f0; font-family: 'Space Grotesk', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #080808; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 2px; }
+
+    /* ── TOKENS ── */
+    :root {
+      --bg:     #000;
+      --s1:     #080808;
+      --s2:     #0f0f0f;
+      --s3:     #141414;
+      --s4:     #1a1a1a;
+      --b1:     #1c1c1c;
+      --b2:     #282828;
+      --cyan:   #00e5ff;
+      --cyan2:  #00b8d4;
+      --gold:   #ffd600;
+      --gold2:  #c6a800;
+      --pink:   #ff4081;
+      --green:  #00e676;
+      --red:    #ff1744;
+      --purple: #d500f9;
+      --blue:   #448aff;
+      --text:   #f0f0f0;
+      --mid:    #888;
+      --dim:    #444;
+      --faint:  #222;
+      --r:      10px;
+      --rl:     14px;
+    }
+
+    /* ── UTILS ── */
+    .hidden { display: none !important; }
+    .flex   { display: flex; }
+    .col    { flex-direction: column; }
+    .ac     { align-items: center; }
+    .jb     { justify-content: space-between; }
+    .g8     { gap: 8px; }
+    .g12    { gap: 12px; }
+    .g16    { gap: 16px; }
+    .wrap   { flex-wrap: wrap; }
+
+    /* ── FORM CONTROLS ── */
+    .inp {
+      width: 100%;
+      background: var(--s3);
+      border: 1px solid var(--b1);
+      color: var(--text);
+      padding: 10px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+    .inp:focus { border-color: var(--cyan); }
+    select.inp option { background: var(--s3); }
+
+    .lbl {
+      display: block;
+      font-size: 10px;
+      color: var(--mid);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .fg { margin-bottom: 14px; }
+
+    /* ── BUTTONS ── */
+    .btn-p {
+      background: var(--cyan);
+      color: #000;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: all .2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-p:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    .btn-s {
+      background: transparent;
+      border: 1px solid var(--b1);
+      color: var(--mid);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-s:hover { border-color: var(--cyan); color: var(--text); }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      border-radius: var(--rl);
+      padding: 20px;
+    }
+
+    /* ══════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════ */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+    }
+    #login-screen::before {
+      content: '';
+      position: fixed;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,229,255,.07) 0%, transparent 65%);
+      top: -250px; right: -200px;
+      pointer-events: none;
+    }
+    #login-screen::after {
+      content: '';
+      position: fixed;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,214,0,.05) 0%, transparent 65%);
+      bottom: -150px; left: -150px;
+      pointer-events: none;
+    }
+
+    .login-wrap { width: 100%; max-width: 420px; position: relative; z-index: 1; }
+
+    .login-logo {
+      display: flex; align-items: center; justify-content: center;
+      gap: 13px; margin-bottom: 14px;
+    }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: var(--cyan); border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; color: #000;
+    }
+    .logo-name { font-size: 30px; font-weight: 700; letter-spacing: -.03em; }
+
+    .login-tag {
+      text-align: center;
+      font-size: 10px; color: var(--dim);
+      letter-spacing: .18em; text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 36px;
+    }
+
+    .login-card {
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      border-radius: var(--rl);
+      padding: 30px;
+    }
+
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 26px; }
+    .auth-tab {
+      flex: 1; padding: 9px;
+      border-radius: 8px;
+      border: 1px solid var(--b1);
+      background: transparent; color: var(--mid);
+      cursor: pointer; font-size: 11px;
+      letter-spacing: .08em; text-transform: uppercase;
+      transition: all .2s; font-family: inherit;
+    }
+    .auth-tab.active { border-color: var(--cyan); background: rgba(0,229,255,.09); color: var(--cyan); }
+
+    .btn-login {
+      width: 100%;
+      background: var(--cyan); color: #000;
+      border: none; padding: 13px;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; letter-spacing: .08em; text-transform: uppercase;
+      transition: all .2s; font-family: inherit; margin-top: 6px;
+    }
+    .btn-login:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+    .err { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; }
+
+    .demo-note {
+      text-align: center; font-size: 11px; color: var(--faint);
+      margin-top: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ══════════════════════════════════════
+       APP LAYOUT
+    ══════════════════════════════════════ */
+    #app { display: none; }
+
+    /* HEADER */
+    .hdr {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(0,0,0,.92);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--b1);
+      height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px;
+    }
+    .hdr-logo { display: flex; align-items: center; gap: 10px; }
+    .hdr-logo-icon {
+      width: 31px; height: 31px;
+      background: var(--cyan); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; color: #000;
+    }
+    .hdr-logo-name { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+
+    .hdr-nav { display: flex; gap: 2px; }
+    .hdr-nav-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 7px 13px; border-radius: 8px;
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--mid); font-family: inherit; transition: all .2s;
+    }
+    .hdr-nav-btn:hover { color: var(--text); }
+    .hdr-nav-btn.on { background: rgba(0,229,255,.1); color: var(--cyan); }
+
+    .hdr-right { display: flex; align-items: center; gap: 8px; }
+
+    .cur-tog {
+      display: flex;
+      background: var(--s2); border: 1px solid var(--b1);
+      border-radius: 8px; overflow: hidden;
+    }
+    .cur-btn {
+      padding: 5px 12px; font-size: 11px;
+      border: none; cursor: pointer; background: transparent;
+      color: var(--mid);
+      font-family: 'JetBrains Mono', monospace;
+      transition: all .2s;
+    }
+    .cur-btn.on { background: var(--cyan); color: #000; font-weight: 500; }
+
+    .hdr-user { font-size: 11px; color: var(--mid); font-family: 'JetBrains Mono', monospace; }
+
+    .logout-btn {
+      background: none; border: 1px solid var(--b1);
+      border-radius: 8px; padding: 5px 11px;
+      color: var(--mid); font-size: 11px; cursor: pointer;
+      font-family: inherit; transition: all .2s;
+    }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* MAIN */
+    .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 90px; }
+
+    /* PAGE HEADER */
+    .ph { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .ph-title { font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
+    .ph-sub { font-size: 12px; color: var(--mid); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+    /* STAT GRID */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 13px; margin-bottom: 18px; }
+    .stat-card {
+      background: var(--s2); border: 1px solid var(--b1);
+      border-radius: var(--rl); padding: 18px 20px;
+      position: relative; overflow: hidden;
+    }
+    .stat-label { font-size: 10px; color: var(--mid); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; }
+    .stat-val { font-size: 21px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 4px; }
+    .stat-sub { font-size: 11px; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+    .stat-line { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+
+    /* CHART GRID */
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 13px; margin-bottom: 13px; }
+    .chart-box { height: 220px; position: relative; }
+    .chart-box-sm { height: 180px; }
+
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .tag {
+      font-size: 10px; padding: 3px 9px; border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tag-dim { background: var(--s3); color: var(--mid); }
+    .tag-cyan { background: rgba(0,229,255,.1); color: var(--cyan); }
+
+    /* TRANSACTION ROWS */
+    .tx-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--b1);
+      transition: background .15s;
+    }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-ico {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0; margin-right: 12px;
+    }
+    .tx-name { font-size: 13px; color: var(--text); }
+    .tx-meta { font-size: 10px; color: var(--mid); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+    .tx-amt { font-size: 13px; font-weight: 600; }
+    .tx-alt { font-size: 10px; color: var(--dim); text-align: right; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+    /* FORM PANEL */
+    .fpanel {
+      background: var(--s2);
+      border: 1px solid rgba(0,229,255,.18);
+      border-radius: var(--rl); padding: 22px;
+      margin-bottom: 16px;
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .fpanel-title { font-size: 11px; color: var(--cyan); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 18px; font-family: 'JetBrains Mono', monospace; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .form-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+    /* FILTER PILLS */
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pill {
+      padding: 5px 16px; border-radius: 20px; font-size: 11px;
+      border: 1px solid var(--b1); background: transparent; color: var(--mid);
+      cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .pill.on { border-color: var(--cyan); background: rgba(0,229,255,.1); color: var(--cyan); }
+
+    /* PROGRESS */
+    .ptrack { background: var(--b1); border-radius: 4px; height: 6px; overflow: hidden; }
+    .pfill { height: 100%; border-radius: 4px; transition: width .7s ease; }
+
+    /* DEBT CARDS */
+    .dt-sec-title { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+    .debt-card {
+      background: var(--s2); border: 1px solid var(--b1);
+      border-radius: var(--rl); padding: 18px; margin-bottom: 12px;
+    }
+
+    .badge {
+      font-size: 9px; padding: 2px 8px; border-radius: 4px;
+      letter-spacing: .06em; text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-over { background: rgba(255,23,68,.15); color: var(--red); }
+    .badge-done { background: rgba(0,230,118,.15); color: var(--green); }
+
+    .repay-row {
+      display: flex; gap: 8px; align-items: center;
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--b1);
+      flex-wrap: wrap;
+    }
+
+    /* NET WORTH */
+    .nw-hero {
+      background: var(--s2);
+      border: 1px solid rgba(0,229,255,.2);
+      border-radius: var(--rl); padding: 26px;
+    }
+    .nw-val { font-size: 40px; font-weight: 700; letter-spacing: -.04em; margin: 8px 0 6px; }
+    .nw-sub { font-size: 11px; color: var(--dim); font-family: 'JetBrains Mono', monospace; margin-bottom: 22px; }
+
+    .nw-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--b1); font-size: 13px; }
+    .nw-row:last-child { border-bottom: none; }
+    .nw-rl { color: var(--mid); }
+    .nw-rv { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+    .ex-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--b1); font-size: 12px; }
+    .ex-row:last-child { border-bottom: none; }
+    .ex-k { color: var(--mid); font-family: 'JetBrains Mono', monospace; }
+    .ex-v { color: var(--gold); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+
+    /* MOBILE NAV */
+    .mnav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,.96);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid var(--b1);
+      display: flex; justify-content: space-around;
+      padding: 8px 0 env(safe-area-inset-bottom, 8px);
+      z-index: 100;
+    }
+    .mnav-btn {
+      background: none; border: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 4px 16px; color: var(--mid); font-family: inherit; transition: color .2s;
+    }
+    .mnav-btn.on { color: var(--cyan); }
+    .mni { font-size: 18px; line-height: 1; }
+    .mnl { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+
+    /* TAB ANIM */
+    .tab { animation: fadeUp .25s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .hdr-nav { display: none; }
+      .hdr-user { display: none !important; }
+      .stat-val { font-size: 18px; }
+      .nw-val { font-size: 30px; }
+    }
+    @media (min-width: 641px) {
+      .mnav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon">M</div>
+      <div class="logo-name">Mawazin</div>
+    </div>
+    <p class="login-tag">Personal Finance · USD / LBP</p>
+
+    <div class="login-card">
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="atab-login" onclick="setAuthMode('login')">Sign In</button>
+        <button class="auth-tab"    id="atab-signup" onclick="setAuthMode('signup')">Register</button>
+      </div>
+
+      <div id="sg-name" class="fg hidden">
+        <label class="lbl">Full Name</label>
+        <input class="inp" id="a-name" type="text" placeholder="Your Name" autocomplete="name">
+      </div>
+      <div class="fg">
+        <label class="lbl">Email</label>
+        <input class="inp" id="a-email" type="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label class="lbl">Password</label>
+        <input class="inp" id="a-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()">
+      </div>
+
+      <div id="a-err" class="err hidden"></div>
+      <button class="btn-login" id="a-btn" onclick="doAuth()">SIGN IN →</button>
+      <p class="demo-note" id="a-note">// password: okok12</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP
+══════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="hdr-logo">
+      <div class="hdr-logo-icon">M</div>
+      <span class="hdr-logo-name">Mawazin</span>
+    </div>
+
+    <nav class="hdr-nav">
+      <button class="hdr-nav-btn" onclick="goTab('dashboard')"    data-tab="dashboard">Dashboard</button>
+      <button class="hdr-nav-btn" onclick="goTab('transactions')" data-tab="transactions">Transactions</button>
+      <button class="hdr-nav-btn" onclick="goTab('debts')"        data-tab="debts">Debts</button>
+      <button class="hdr-nav-btn" onclick="goTab('networth')"     data-tab="networth">Net Worth</button>
+    </nav>
+
+    <div class="hdr-right">
+      <div class="cur-tog">
+        <button class="cur-btn on" id="cur-usd" onclick="setCur('USD')">USD</button>
+        <button class="cur-btn"    id="cur-lbp" onclick="setCur('LBP')">LBP</button>
+      </div>
+      <span id="sync-status" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--mid);min-width:70px;text-align:right;"></span>
+      <span class="hdr-user" id="hdr-user" style="display:none"></span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ─────────────────── DASHBOARD ─────────────────── -->
+    <div id="tab-dashboard" class="tab hidden">
+      <div class="ph">
+        <div>
+          <h1 class="ph-title">Good day, <span id="g-name" style="color:var(--cyan)">—</span></h1>
+          <p class="ph-sub" id="g-date"></p>
+        </div>
+      </div>
+      <div class="stat-grid" id="stat-grid"></div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Spending by Category</span>
+            <span class="tag tag-dim">ALL TIME</span>
+          </div>
+          <div class="chart-box"><canvas id="ch-pie"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Balance Trend</span>
+            <span class="tag tag-cyan">LIVE</span>
+          </div>
+          <div class="chart-box"><canvas id="ch-line"></canvas></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:13px">
+        <div class="card-head"><span class="card-title">Monthly Income vs Expenses</span></div>
+        <div class="chart-box-sm"><canvas id="ch-bar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Recent Transactions</span>
+          <button onclick="goTab('transactions')" style="background:none;border:none;color:var(--cyan);font-size:12px;cursor:pointer;font-family:inherit">View all →</button>
+        </div>
+        <div id="dash-recent"></div>
+      </div>
+    </div>
+
+    <!-- ─────────────────── TRANSACTIONS ─────────────────── -->
+    <div id="tab-transactions" class="tab hidden">
+      <div class="ph">
+        <div>
+          <h1 class="ph-title">Transactions</h1>
+          <p class="ph-sub" id="tx-count"></p>
+        </div>
+        <button class="btn-p" onclick="toggleForm('tx')">+ Add Transaction</button>
+      </div>
+
+      <div id="tx-form" class="hidden">
+        <div class="fpanel">
+          <p class="fpanel-title">New Transaction</p>
+          <div class="form-grid">
+            <div class="fg">
+              <label class="lbl">Type</label>
+              <select class="inp" id="tf-type">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="lbl" id="tf-albl">Amount (USD)</label>
+              <input class="inp" id="tf-amt" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="fg">
+              <label class="lbl">Category</label>
+              <select class="inp" id="tf-cat"></select>
+            </div>
+            <div class="fg">
+              <label class="lbl">Date</label>
+              <input class="inp" id="tf-date" type="date">
+            </div>
+            <div class="fg">
+              <label class="lbl">Description</label>
+              <input class="inp" id="tf-desc" type="text" placeholder="Optional notes">
+            </div>
+            <div class="fg">
+              <label class="lbl">Link to Debt</label>
+              <select class="inp" id="tf-debt"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <button class="btn-p" onclick="addTx()">Add Transaction</button>
+            <button class="btn-s" onclick="toggleForm('tx')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pills">
+        <button class="pill on" id="pf-all"     onclick="setFilter('all')">All</button>
+        <button class="pill"    id="pf-income"  onclick="setFilter('income')">Income</button>
+        <button class="pill"    id="pf-expense" onclick="setFilter('expense')">Expenses</button>
+      </div>
+
+      <div class="card" id="tx-list" style="padding:0 20px"></div>
+    </div>
+
+    <!-- ─────────────────── DEBTS ─────────────────── -->
+    <div id="tab-debts" class="tab hidden">
+      <div class="ph">
+        <div>
+          <h1 class="ph-title">Debt Tracker</h1>
+          <p class="ph-sub">Track what you owe and what's owed to you</p>
+        </div>
+        <button class="btn-p" onclick="toggleForm('debt')">+ Add Entry</button>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px">
+        <div class="stat-card" style="border-left:2px solid var(--green)">
+          <div class="stat-label">Owed to Me</div>
+          <div class="stat-val" id="d-me"  style="color:var(--green)">—</div>
+          <div class="stat-sub" id="d-mes"></div>
+        </div>
+        <div class="stat-card" style="border-left:2px solid var(--red)">
+          <div class="stat-label">I Owe</div>
+          <div class="stat-val" id="d-owe" style="color:var(--red)">—</div>
+          <div class="stat-sub" id="d-owes"></div>
+        </div>
+      </div>
+
+      <div id="debt-form" class="hidden">
+        <div class="fpanel">
+          <p class="fpanel-title">New Debt Entry</p>
+          <div class="form-grid">
+            <div class="fg">
+              <label class="lbl">Type</label>
+              <select class="inp" id="df-type">
+                <option value="owed_to_me">Owed to Me</option>
+                <option value="i_owe">I Owe</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="lbl">Person Name</label>
+              <input class="inp" id="df-name" type="text" placeholder="Name">
+            </div>
+            <div class="fg">
+              <label class="lbl" id="df-albl">Amount (USD)</label>
+              <input class="inp" id="df-amt" type="number" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="fg">
+              <label class="lbl">Due Date</label>
+              <input class="inp" id="df-due" type="date">
+            </div>
+            <div class="fg">
+              <label class="lbl">Notes</label>
+              <input class="inp" id="df-desc" type="text" placeholder="Optional notes">
+            </div>
+          </div>
+          <div class="form-row">
+            <button class="btn-p" onclick="addDebt()">Add Entry</button>
+            <button class="btn-s" onclick="toggleForm('debt')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="dt-sec-title" style="color:var(--green)">▲ Owed to Me</p>
+      <div id="dl-me"></div>
+      <p class="dt-sec-title" style="color:var(--red);margin-top:22px">▼ I Owe</p>
+      <div id="dl-owe"></div>
+    </div>
+
+    <!-- ─────────────────── NET WORTH ─────────────────── -->
+    <div id="tab-networth" class="tab hidden">
+      <div class="ph">
+        <div>
+          <h1 class="ph-title">Net Worth</h1>
+          <p class="ph-sub">Your complete financial picture</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div>
+          <div class="card" style="margin-bottom:13px">
+            <p style="font-size:11px;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;font-family:'JetBrains Mono',monospace">ASSETS</p>
+            <div id="nw-assets"></div>
+          </div>
+          <div class="card" style="margin-bottom:13px">
+            <p style="font-size:11px;color:var(--red);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;font-family:'JetBrains Mono',monospace">LIABILITIES</p>
+            <div id="nw-liab"></div>
+          </div>
+          <div class="nw-hero">
+            <p style="font-size:10px;color:var(--mid);letter-spacing:.12em;text-transform:uppercase;font-family:'JetBrains Mono',monospace">NET WORTH</p>
+            <div class="nw-val" id="nw-val">—</div>
+            <div class="nw-sub" id="nw-sub"></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:7px;font-family:'JetBrains Mono',monospace">
+              <span id="nw-al" style="color:var(--green)"></span>
+              <span id="nw-ll" style="color:var(--red)"></span>
+            </div>
+            <div class="ptrack" style="height:10px;border-radius:5px">
+              <div class="pfill" id="nw-bar" style="background:linear-gradient(to right,var(--green),var(--cyan))"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:13px">
+            <div class="card-head"><span class="card-title">Balance History</span></div>
+            <div style="height:240px"><canvas id="ch-nw"></canvas></div>
+          </div>
+          <div class="card">
+            <p style="font-size:11px;color:var(--mid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;font-family:'JetBrains Mono',monospace">CURRENCY CONVERSION</p>
+            <div id="nw-ex"></div>
+            <p style="font-size:10px;color:var(--faint);margin-top:10px;font-family:'JetBrains Mono',monospace">Rate: 1 USD = L£89,500 (parallel market)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MOBILE NAV -->
+  <nav class="mnav">
+    <button class="mnav-btn" onclick="goTab('dashboard')"    data-tab="dashboard">    <span class="mni">◎</span><span class="mnl">Home</span></button>
+    <button class="mnav-btn" onclick="goTab('transactions')" data-tab="transactions"> <span class="mni">⇅</span><span class="mnl">Txns</span></button>
+    <button class="mnav-btn" onclick="goTab('debts')"        data-tab="debts">        <span class="mni">⚖</span><span class="mnl">Debts</span></button>
+    <button class="mnav-btn" onclick="goTab('networth')"     data-tab="networth">     <span class="mni">⬡</span><span class="mnl">Worth</span></button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ══ ONBOARDING MODAL ══ -->
+<div id="onboard-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--s2);border:1px solid var(--cyan);border-radius:16px;padding:32px;max-width:440px;width:100%;position:relative;">
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px;">Welcome to Mawazin 👋</div>
+    <p style="font-size:12px;color:var(--mid);font-family:'JetBrains Mono',monospace;margin-bottom:24px;">Let's set up your starting balance. You can always add more transactions later.</p>
+    <div class="fg">
+      <label class="lbl">Your Current Income / Starting Balance (USD)</label>
+      <input class="inp" id="ob-income" type="number" min="0" step="0.01" placeholder="e.g. 2500.00" style="font-size:16px;">
+    </div>
+    <div class="fg">
+      <label class="lbl">Income Category</label>
+      <select class="inp" id="ob-cat">
+        <option value="Salary">Salary</option>
+        <option value="Freelance">Freelance</option>
+        <option value="Business">Business</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="lbl">Description (optional)</label>
+      <input class="inp" id="ob-desc" type="text" placeholder="e.g. Monthly salary">
+    </div>
+    <div id="ob-err" class="err hidden"></div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn-p" style="flex:1;" onclick="finishOnboard()">Start Tracking →</button>
+      <button class="btn-s" onclick="skipOnboard()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT TRANSACTION MODAL ══ -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--s2);border:1px solid var(--b2);border-radius:16px;padding:28px;max-width:480px;width:100%;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:20px;letter-spacing:-.02em;">Edit Transaction</div>
+    <input type="hidden" id="et-id">
+    <div class="form-grid">
+      <div class="fg">
+        <label class="lbl">Type</label>
+        <select class="inp" id="et-type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="lbl">Amount (USD)</label>
+        <input class="inp" id="et-amt" type="number" min="0" step="0.01">
+      </div>
+      <div class="fg">
+        <label class="lbl">Category</label>
+        <select class="inp" id="et-cat"></select>
+      </div>
+      <div class="fg">
+        <label class="lbl">Date</label>
+        <input class="inp" id="et-date" type="date">
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label class="lbl">Description</label>
+        <input class="inp" id="et-desc" type="text" placeholder="Optional notes">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+      <button class="btn-p" onclick="saveEditTx()">Save Changes</button>
+      <button class="btn-s" onclick="deleteTx()">🗑 Delete</button>
+      <button class="btn-s" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  MAWAZIN · CONFIG  — change these to customise
+// ═══════════════════════════════════════════════════════════════
+const APP_PASS  = 'okok12';        // ← your login password
+const LBP_RATE  = 89500;           // ← update exchange rate here
+// ═══════════════════════════════════════════════════════════════
+
+const CATS = ['Salary','Freelance','Business','Food','Fast Food','Transport','Utilities','Rent','Health','Education','Leisure','Subscriptions','Other'];
+const PCOLS = ['#00e5ff','#ffd600','#ff4081','#00e676','#d500f9','#ff9100','#76ff03','#f06292','#4dd0e1'];
+const MOS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const DEMO_TXS = [];
+const DEMO_DEBTS = [];
+
+// ── STATE ──────────────────────────────────────────────────────
+const S = {
+  txs: [], debts: [], cur: 'USD',
+  tab: 'dashboard', filter: 'all',
+  user: null,
+  ch: { pie:null, line:null, bar:null, nw:null }
+};
+
+// ── SUPABASE CONFIG ───────────────────────────────────────────
+const SB_URL = 'https://xolvrhkgypipvryzstpu.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvbHZyaGtneXBpcHZyeXpzdHB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNjkzMzksImV4cCI6MjA5Mzg0NTMzOX0.8_UJDkk8qN4hCuahdzL2n_x4ogQ5jTHPCt4UUJ92Pqc';
+const SB_HEADERS = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+
+function showSyncStatus(msg, color) {
+  let el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || 'var(--mid)';
+}
+
+// ── PERSISTENCE ───────────────────────────────────────────────
+async function save() {
+  if (!S.user) return;
+  // Always save to localStorage as backup
+  localStorage.setItem('mwz_' + S.user.email,
+    JSON.stringify({ txs: S.txs, debts: S.debts, cur: S.cur }));
+  // Save to Supabase
+  showSyncStatus('⟳ Saving...', 'var(--mid)');
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/mawazin_data', {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        email: S.user.email,
+        txs: S.txs,
+        debts: S.debts,
+        cur: S.cur,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (res.ok) showSyncStatus('✓ Saved', 'var(--green)');
+    else showSyncStatus('⚠ Save failed', 'var(--red)');
+  } catch(e) {
+    showSyncStatus('⚠ Offline', 'var(--gold)');
+  }
+  setTimeout(() => showSyncStatus(''), 3000);
+}
+
+async function load(email) {
+  showSyncStatus('⟳ Loading...', 'var(--mid)');
+  try {
+    const res = await fetch(SB_URL + '/rest/v1/mawazin_data?email=eq.' + encodeURIComponent(email) + '&select=*', {
+      headers: SB_HEADERS
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows.length > 0) {
+        const d = rows[0];
+        S.txs   = d.txs   || [];
+        S.debts = d.debts || [];
+        S.cur   = d.cur   || 'USD';
+        // Sync local backup too
+        localStorage.setItem('mwz_' + email, JSON.stringify({ txs: S.txs, debts: S.debts, cur: S.cur }));
+        showSyncStatus('✓ Synced', 'var(--green)');
+        setTimeout(() => showSyncStatus(''), 2000);
+        return;
+      }
+    }
+  } catch(e) {
+    // Fall through to localStorage
+  }
+  // Fallback: localStorage
+  const raw = localStorage.getItem('mwz_' + email);
+  if (raw) {
+    try { const d = JSON.parse(raw); S.txs = d.txs||[]; S.debts = d.debts||[]; S.cur = d.cur||'USD';
+      showSyncStatus('⚠ Offline mode', 'var(--gold)'); setTimeout(() => showSyncStatus(''), 3000); return; } catch(e) {}
+  }
+  S.txs = []; S.debts = [];
+  showSyncStatus('');
+}
+
+// ── FORMAT ────────────────────────────────────────────────────
+function fmt(n, c) {
+  c = c || S.cur;
+  if (c === 'LBP') return 'L£\u202f' + Math.round(n * LBP_RATE).toLocaleString();
+  return '$' + (+n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtAlt(n) {
+  if (S.cur === 'USD') return '≈ L£\u202f' + Math.round(n * LBP_RATE).toLocaleString();
+  return '≈ $' + (n / LBP_RATE).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// ── CALC ──────────────────────────────────────────────────────
+function calc() {
+  const now = new Date(), cm = now.getMonth(), cy = now.getFullYear();
+  const mo = S.txs.filter(t => { const d=new Date(t.date); return d.getMonth()===cm && d.getFullYear()===cy; });
+  const mInc  = mo.filter(t=>t.type==='income' ).reduce((s,t)=>s+t.amount,0);
+  const mExp  = mo.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal   = S.txs.reduce((s,t)=>t.type==='income'?s+t.amount:s-t.amount, 0);
+  const owedMe= S.debts.filter(d=>d.type==='owed_to_me').reduce((s,d)=>s+(d.amount-d.paid),0);
+  const iOwe  = S.debts.filter(d=>d.type==='i_owe'     ).reduce((s,d)=>s+(d.amount-d.paid),0);
+  return { mInc, mExp, bal, owedMe, iOwe, nw: bal + owedMe - iOwe };
+}
+function pieData() {
+  const m={};
+  S.txs.filter(t=>t.type==='expense').forEach(t=>{ m[t.category]=(m[t.category]||0)+t.amount; });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function lineData() {
+  const bm={};
+  S.txs.forEach(t=>{ const d=new Date(t.date), k=d.getFullYear()+'-'+String(d.getMonth()).padStart(2,'0');
+    if(!bm[k]) bm[k]={lb:MOS[d.getMonth()],yr:d.getFullYear(),mo:d.getMonth(),i:0,e:0};
+    t.type==='income'?bm[k].i+=t.amount:bm[k].e+=t.amount; });
+  let b=0;
+  return Object.values(bm).sort((a,x)=>a.yr!==x.yr?a.yr-x.yr:a.mo-x.mo).map(m=>{
+    b+=m.i-m.e; return {month:m.lb,bal:+b.toFixed(2),inc:m.i,exp:m.e}; });
+}
+
+// ── AUTH ──────────────────────────────────────────────────────
+let aMode = 'login';
+function setAuthMode(m) {
+  aMode = m;
+  document.getElementById('atab-login' ).classList.toggle('on', m==='login');
+  document.getElementById('atab-signup').classList.toggle('on', m==='signup');
+  document.getElementById('sg-name').classList.toggle('hidden', m==='login');
+  document.getElementById('a-btn').textContent  = m==='login' ? 'SIGN IN →' : 'CREATE ACCOUNT →';
+  document.getElementById('a-note').classList.toggle('hidden', m==='signup');
+  document.getElementById('a-err').classList.add('hidden');
+}
+async function doAuth() {
+  const email = document.getElementById('a-email').value.trim();
+  const pass  = document.getElementById('a-pass').value;
+  const name  = document.getElementById('a-name').value.trim();
+  const err   = document.getElementById('a-err');
+  if (!email || !pass) { err.textContent='Please fill all fields'; err.classList.remove('hidden'); return; }
+  if (pass !== APP_PASS) { err.textContent='Incorrect password'; err.classList.remove('hidden'); return; }
+  const btn = document.getElementById('a-btn');
+  btn.textContent = 'Connecting...'; btn.disabled = true;
+  S.user = { name: name || email.split('@')[0], email };
+  localStorage.setItem('mwz_session', JSON.stringify(S.user));
+  await load(email);
+  btn.textContent = aMode==='login' ? 'SIGN IN →' : 'CREATE ACCOUNT →'; btn.disabled = false;
+  showApp();
+}
+function logout() {
+  localStorage.removeItem('mwz_session');
+  S.user = null;
+  destroyCharts();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('a-pass').value = '';
+  document.getElementById('a-err').classList.add('hidden');
+}
+function destroyCharts() {
+  Object.values(S.ch).forEach(c => c && c.destroy && c.destroy());
+  S.ch = { pie:null, line:null, bar:null, nw:null };
+}
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const u = document.getElementById('hdr-user');
+  u.textContent = S.user.name; u.style.display = 'inline';
+  document.getElementById('cur-usd').classList.toggle('on', S.cur==='USD');
+  document.getElementById('cur-lbp').classList.toggle('on', S.cur==='LBP');
+  goTab('dashboard');
+  checkOnboard();
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function goTab(id) {
+  ['dashboard','transactions','debts','networth'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==id);
+  });
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab===id));
+  S.tab = id;
+  if      (id==='dashboard')    renderDash();
+  else if (id==='transactions') renderTxs();
+  else if (id==='debts')        renderDebts();
+  else if (id==='networth')     renderNW();
+}
+
+// ── CURRENCY ──────────────────────────────────────────────────
+function setCur(c) {
+  S.cur = c;
+  document.getElementById('cur-usd').classList.toggle('on', c==='USD');
+  document.getElementById('cur-lbp').classList.toggle('on', c==='LBP');
+  const l = c === 'LBP' ? 'LBP' : 'USD';
+  document.getElementById('tf-albl').textContent = 'Amount (' + l + ')';
+  document.getElementById('df-albl').textContent = 'Amount (' + l + ')';
+  save();
+  goTab(S.tab);
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────
+const gridColor = '#1a1a1a';
+const tickColor = '#555';
+const baseScales = {
+  x: { grid:{color:gridColor}, ticks:{color:tickColor,font:{size:10}}, border:{display:false} },
+  y: { grid:{color:gridColor}, ticks:{color:tickColor,font:{size:10},callback:v=>'$'+v}, border:{display:false} }
+};
+const baseLegend = { labels:{color:'#666',font:{size:11},boxWidth:11,padding:14} };
+function mkLine(id, ld, ds) {
+  const c = document.getElementById(id); if (!c) return null;
+  return new Chart(c.getContext('2d'), {
+    type:'line', data:{ labels:ld.map(d=>d.month), datasets:ds },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:baseLegend},
+      scales:baseScales, elements:{point:{radius:3}} }
+  });
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDash() {
+  const s = calc(), ld = lineData(), pd = pieData();
+
+  // Greeting
+  document.getElementById('g-name').textContent = S.user.name;
+  document.getElementById('g-date').textContent = new Date().toLocaleDateString('en-US',
+    {weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  // Stat cards
+  const cards = [
+    {l:'Total Balance',    v:fmt(s.bal),    sub:fmtAlt(s.bal),    c:s.bal>=0?'var(--green)':'var(--red)',    a:s.bal>=0?'#00e676':'#ff1744'},
+    {l:'Monthly Income',   v:fmt(s.mInc),   sub:fmtAlt(s.mInc),   c:'var(--green)',                          a:'#00e676'},
+    {l:'Monthly Expenses', v:fmt(s.mExp),   sub:fmtAlt(s.mExp),   c:'var(--pink)',                           a:'#ff4081'},
+    {l:'Net Worth',        v:fmt(s.nw),     sub:fmtAlt(s.nw),     c:s.nw>=0?'var(--gold)':'var(--red)',      a:s.nw>=0?'#ffd600':'#ff1744'},
+  ];
+  document.getElementById('stat-grid').innerHTML = cards.map(c=>`
+    <div class="stat-card">
+      <div class="stat-label">${c.l}</div>
+      <div class="stat-val" style="color:${c.c}">${c.v}</div>
+      <div class="stat-sub">${c.sub}</div>
+      <div class="stat-line" style="background:${c.a};opacity:.5"></div>
+    </div>`).join('');
+
+  // Destroy old charts
+  destroyCharts();
+
+  // Pie
+  if (pd.length) {
+    const ctx = document.getElementById('ch-pie').getContext('2d');
+    S.ch.pie = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:pd.map(d=>d[0]), datasets:[{ data:pd.map(d=>d[1]), backgroundColor:PCOLS, borderWidth:0, hoverOffset:6 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+        plugins:{ legend:{position:'right',labels:{color:'#666',font:{size:11},boxWidth:10}},
+          tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+fmt(ctx.raw)}} } }
+    });
+  }
+
+  // Line
+  if (ld.length) {
+    S.ch.line = mkLine('ch-line', ld, [
+      {label:'Balance',  data:ld.map(d=>d.bal), borderColor:'#00e5ff', backgroundColor:'rgba(0,229,255,.05)', tension:.4, fill:true},
+      {label:'Income',   data:ld.map(d=>d.inc), borderColor:'#00e676', borderDash:[5,4], tension:.4, fill:false},
+      {label:'Expenses', data:ld.map(d=>d.exp), borderColor:'#ff4081', borderDash:[5,4], tension:.4, fill:false},
+    ]);
+  }
+
+  // Bar
+  if (ld.length) {
+    const ctx = document.getElementById('ch-bar').getContext('2d');
+    S.ch.bar = new Chart(ctx, {
+      type:'bar',
+      data:{ labels:ld.map(d=>d.month), datasets:[
+        {label:'Income',   data:ld.map(d=>d.inc), backgroundColor:'rgba(0,230,118,.45)', borderRadius:4},
+        {label:'Expenses', data:ld.map(d=>d.exp), backgroundColor:'rgba(255,64,129,.45)', borderRadius:4},
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:baseLegend},
+        scales:baseScales, barPercentage:.7 }
+    });
+  }
+
+  // Recent
+  const recent = S.txs.slice(0,5);
+  document.getElementById('dash-recent').innerHTML = recent.length
+    ? recent.map((t,i)=>txRowHTML(t,i===recent.length-1)).join('')
+    : '<p style="color:var(--faint);font-size:13px;padding:16px 0">No transactions yet</p>';
+}
+
+// ── TX ROW ────────────────────────────────────────────────────
+function txRowHTML(tx, last) {
+  const inc = tx.type==='income';
+  const c   = inc ? 'var(--green)' : 'var(--red)';
+  const bg  = inc ? 'rgba(0,230,118,.12)' : 'rgba(255,64,129,.12)';
+  return `<div class="tx-row" style="${last?'border-bottom:none':''};cursor:pointer;" onclick="openEditTx(${tx.id})" title="Click to edit">
+    <div class="flex ac">
+      <div class="tx-ico" style="background:${bg};color:${c}">${inc?'↑':'↓'}</div>
+      <div><div class="tx-name">${tx.desc||tx.category}</div><div class="tx-meta">${tx.category} · ${tx.date}</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div>
+        <div class="tx-amt" style="color:${c}">${inc?'+':'−'}${fmt(tx.amount)}</div>
+        <div class="tx-alt">${fmtAlt(tx.amount)}</div>
+      </div>
+      <span style="color:var(--dim);font-size:14px;opacity:.5;">✎</span>
+    </div>
+  </div>`;
+}
+
+// ── TRANSACTIONS ──────────────────────────────────────────────
+let tfOpen = false;
+function toggleForm(which) {
+  if (which === 'tx') {
+    tfOpen = !tfOpen;
+    document.getElementById('tx-form').classList.toggle('hidden', !tfOpen);
+    if (tfOpen) {
+      const cat = document.getElementById('tf-cat');
+      cat.innerHTML = CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
+      document.getElementById('tf-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('tf-albl').textContent = 'Amount (' + S.cur + ')';
+      const ds = document.getElementById('tf-debt');
+      const open = S.debts.filter(d=>d.paid<d.amount);
+      ds.innerHTML = '<option value="">None</option>' +
+        open.map(d=>`<option value="${d.id}">${d.name} (${d.type==='i_owe'?'I Owe':'Owed to Me'}) — ${fmt(d.amount-d.paid)}</option>`).join('');
+    }
+  } else {
+    dfOpen = !dfOpen;
+    document.getElementById('debt-form').classList.toggle('hidden', !dfOpen);
+    if (dfOpen) document.getElementById('df-albl').textContent = 'Amount (' + S.cur + ')';
+  }
+}
+function setFilter(f) {
+  S.filter = f;
+  ['all','income','expense'].forEach(k => document.getElementById('pf-'+k).classList.toggle('on', k===f));
+  renderTxs(false);
+}
+function addTx() {
+  const amt = parseFloat(document.getElementById('tf-amt').value);
+  const date = document.getElementById('tf-date').value;
+  if (!amt || !date) return;
+  const tx = { id:Date.now(), amount:amt, category:document.getElementById('tf-cat').value,
+    date, type:document.getElementById('tf-type').value, desc:document.getElementById('tf-desc').value };
+  S.txs.unshift(tx);
+  const did = document.getElementById('tf-debt').value;
+  if (did) S.debts = S.debts.map(d=>d.id===parseInt(did)?{...d,paid:Math.min(d.paid+amt,d.amount)}:d);
+  save(); tfOpen=false; document.getElementById('tx-form').classList.add('hidden');
+  document.getElementById('tf-amt').value=''; document.getElementById('tf-desc').value='';
+  renderTxs();
+}
+function renderTxs(resetFilter) {
+  const list = S.filter==='all' ? S.txs : S.txs.filter(t=>t.type===S.filter);
+  document.getElementById('tx-count').textContent = list.length + ' entries';
+  document.getElementById('tx-list').innerHTML = list.length
+    ? list.map((t,i)=>txRowHTML(t,i===list.length-1)).join('')
+    : '<p style="color:var(--faint);text-align:center;padding:36px;font-size:13px">No transactions found</p>';
+}
+
+// ── DEBTS ─────────────────────────────────────────────────────
+let dfOpen = false;
+function addDebt() {
+  const name = document.getElementById('df-name').value.trim();
+  const amt  = parseFloat(document.getElementById('df-amt').value);
+  if (!name || !amt) return;
+  S.debts.unshift({ id:Date.now(), name, amount:amt, paid:0,
+    due:document.getElementById('df-due').value,
+    type:document.getElementById('df-type').value,
+    desc:document.getElementById('df-desc').value });
+  save(); dfOpen=false; document.getElementById('debt-form').classList.add('hidden');
+  ['df-name','df-amt','df-desc'].forEach(id=>document.getElementById(id).value='');
+  renderDebts();
+}
+function logRepay(id) {
+  const inp = document.getElementById('rp-'+id);
+  const amt = parseFloat(inp.value); if (!amt) return;
+  const debt = S.debts.find(d=>d.id===id);
+  S.debts = S.debts.map(d=>d.id===id?{...d,paid:Math.min(d.paid+amt,d.amount)}:d);
+  if (debt) S.txs.unshift({ id:Date.now(), amount:amt, category:'Other',
+    date:new Date().toISOString().split('T')[0],
+    type:debt.type==='i_owe'?'expense':'income', desc:'Repayment — '+debt.name });
+  inp.value=''; save(); renderDebts();
+}
+function debtCard(d) {
+  const isMe = d.type==='owed_to_me';
+  const bc   = isMe ? '#00e676' : '#ff1744';
+  const pct  = Math.min((d.paid/d.amount)*100,100);
+  const rem  = d.amount - d.paid;
+  const over = d.due && new Date(d.due)<new Date() && rem>0;
+  const done = pct>=100;
+  return `<div class="debt-card" style="border-left:2px solid ${bc}">
+    <div class="flex jb ac wrap" style="margin-bottom:12px;gap:8px">
+      <div>
+        <div class="flex ac g8 wrap">
+          <span style="font-size:14px;font-weight:600">${d.name}</span>
+          ${over?'<span class="badge badge-over">Overdue</span>':''}
+          ${done?'<span class="badge badge-done">Settled</span>':''}
+        </div>
+        <div style="font-size:11px;color:var(--mid);margin-top:3px;font-family:'JetBrains Mono',monospace">${d.desc||''}${d.due?' · Due '+d.due:''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:600">${fmt(d.amount)}</div>
+        <div style="font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace">${fmt(rem)} left</div>
+      </div>
+    </div>
+    <div style="margin-bottom:${done?0:12}px">
+      <div class="flex jb" style="margin-bottom:6px;font-size:11px;font-family:'JetBrains Mono',monospace">
+        <span style="color:var(--mid)">Repaid: ${fmt(d.paid)}</span>
+        <span style="color:${done?'var(--green)':'var(--mid)'}">${pct.toFixed(0)}%</span>
+      </div>
+      <div class="ptrack"><div class="pfill" style="width:${pct}%;background:${done?'#00e676':bc}"></div></div>
+    </div>
+    ${!done?`<div class="repay-row">
+      <input class="inp" id="rp-${d.id}" type="number" min="0" step="0.01" placeholder="Log payment (${S.cur})" style="max-width:200px">
+      <button class="btn-p" onclick="logRepay(${d.id})">Log Repayment</button>
+    </div>`:''}
+  </div>`;
+}
+function renderDebts() {
+  const s = calc();
+  document.getElementById('d-me' ).textContent = fmt(s.owedMe);
+  document.getElementById('d-mes').textContent = fmtAlt(s.owedMe);
+  document.getElementById('d-owe').textContent = fmt(s.iOwe);
+  document.getElementById('d-owes').textContent = fmtAlt(s.iOwe);
+  const me  = S.debts.filter(d=>d.type==='owed_to_me');
+  const owe = S.debts.filter(d=>d.type==='i_owe');
+  document.getElementById('dl-me' ).innerHTML = me.length  ? me.map(debtCard).join('')  : '<p style="color:var(--faint);font-size:12px;padding:6px 0">No entries</p>';
+  document.getElementById('dl-owe').innerHTML = owe.length ? owe.map(debtCard).join('') : '<p style="color:var(--faint);font-size:12px;padding:6px 0">No entries</p>';
+}
+
+// ── NET WORTH ─────────────────────────────────────────────────
+function renderNW() {
+  const s = calc(), ld = lineData();
+  const ta = s.bal + s.owedMe;
+  const tl = s.iOwe;
+  const tot = ta + tl || 1;
+
+  document.getElementById('nw-assets').innerHTML = [
+    ['Cash Balance', s.bal, 'var(--green)',''],
+    ['Receivables',  s.owedMe, '#448aff',''],
+    ['Total Assets', ta, 'var(--green)','font-weight:600;font-size:14px'],
+  ].map(([l,v,c,x])=>`<div class="nw-row" style="${x||''}">
+    <span class="nw-rl">${l}</span>
+    <span class="nw-rv" style="color:${c}">${fmt(v)}</span>
+  </div>`).join('');
+
+  document.getElementById('nw-liab').innerHTML = `
+    <div class="nw-row" style="font-weight:600;font-size:14px">
+      <span class="nw-rl">Outstanding Debts</span>
+      <span class="nw-rv" style="color:var(--red)">${fmt(tl)}</span>
+    </div>`;
+
+  const nc = s.nw>=0 ? '#ffd600' : '#ff1744';
+  document.getElementById('nw-val').style.color = nc;
+  document.getElementById('nw-val').textContent  = fmt(s.nw);
+  document.getElementById('nw-sub').textContent  = fmtAlt(s.nw);
+  document.getElementById('nw-al').textContent   = 'Assets ' + fmt(ta);
+  document.getElementById('nw-ll').textContent   = 'Liabilities ' + fmt(tl);
+  document.getElementById('nw-bar').style.width  = (ta/tot*100).toFixed(1)+'%';
+
+  document.getElementById('nw-ex').innerHTML = [
+    ['1 USD',             'L£\u202f'+LBP_RATE.toLocaleString()],
+    ['Cash Balance (USD)','$'+s.bal.toFixed(2)],
+    ['Cash Balance (LBP)','L£\u202f'+Math.round(s.bal*LBP_RATE).toLocaleString()],
+    ['Net Worth (USD)',   '$'+s.nw.toFixed(2)],
+    ['Net Worth (LBP)',   'L£\u202f'+Math.round(s.nw*LBP_RATE).toLocaleString()],
+  ].map(([k,v])=>`<div class="ex-row"><span class="ex-k">${k}</span><span class="ex-v">${v}</span></div>`).join('');
+
+  if (S.ch.nw) { S.ch.nw.destroy(); S.ch.nw=null; }
+  if (ld.length) {
+    S.ch.nw = mkLine('ch-nw', ld, [
+      {label:'Net Balance', data:ld.map(d=>d.bal), borderColor:'#ffd600', backgroundColor:'rgba(255,214,0,.05)', tension:.4, fill:true}
+    ]);
+  }
+}
+
+// ── ONBOARDING ────────────────────────────────────────────────
+function checkOnboard() {
+  // Show onboard if user has no transactions at all
+  if (S.txs.length === 0) {
+    const m = document.getElementById('onboard-modal');
+    m.style.display = 'flex';
+  }
+}
+function finishOnboard() {
+  const amt = parseFloat(document.getElementById('ob-income').value);
+  const err = document.getElementById('ob-err');
+  if (!amt || amt <= 0) { err.textContent = 'Please enter a valid amount'; err.classList.remove('hidden'); return; }
+  const cat  = document.getElementById('ob-cat').value;
+  const desc = document.getElementById('ob-desc').value || cat;
+  S.txs.unshift({ id: Date.now(), amount: amt, category: cat,
+    date: new Date().toISOString().split('T')[0], type: 'income', desc });
+  save();
+  document.getElementById('onboard-modal').style.display = 'none';
+  goTab('dashboard');
+}
+function skipOnboard() {
+  document.getElementById('onboard-modal').style.display = 'none';
+}
+
+// ── EDIT / DELETE TRANSACTION ─────────────────────────────────
+function openEditTx(id) {
+  const tx = S.txs.find(t => t.id === id);
+  if (!tx) return;
+  document.getElementById('et-id').value   = id;
+  document.getElementById('et-type').value = tx.type;
+  document.getElementById('et-amt').value  = tx.amount;
+  document.getElementById('et-date').value = tx.date;
+  document.getElementById('et-desc').value = tx.desc || '';
+  const cat = document.getElementById('et-cat');
+  cat.innerHTML = CATS.map(c => `<option value="${c}" ${c===tx.category?'selected':''}>${c}</option>`).join('');
+  const m = document.getElementById('edit-modal');
+  m.style.display = 'flex';
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+function saveEditTx() {
+  const id  = parseInt(document.getElementById('et-id').value);
+  const amt = parseFloat(document.getElementById('et-amt').value);
+  if (!amt) return;
+  S.txs = S.txs.map(t => t.id === id ? {
+    ...t,
+    amount:   amt,
+    type:     document.getElementById('et-type').value,
+    category: document.getElementById('et-cat').value,
+    date:     document.getElementById('et-date').value,
+    desc:     document.getElementById('et-desc').value,
+  } : t);
+  save(); closeEditModal(); renderTxs(); renderDash();
+}
+function deleteTx() {
+  const id = parseInt(document.getElementById('et-id').value);
+  if (!confirm('Delete this transaction?')) return;
+  S.txs = S.txs.filter(t => t.id !== id);
+  save(); closeEditModal(); renderTxs(); renderDash();
+}
+
+// ── BOOT ──────────────────────────────────────────────────────
+(async function boot() {
+  const sess = localStorage.getItem('mwz_session');
+  if (sess) {
+    try { S.user = JSON.parse(sess); await load(S.user.email); showApp(); return; } catch(e) {}
+  }
+  // Show login
+  document.getElementById('login-screen').style.display = 'flex';
+})();
+</script>
+</body>
+</html>
