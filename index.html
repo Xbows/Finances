@@ -1273,6 +1273,7 @@ function executeAIAction(action, msgEl){
     if(S.events.length<before){saveData();if(S.tab==='calendar')renderCalendar();showActionConfirm(msgEl,'✓ Event deleted',()=>goTab('calendar'));}
     else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that event.</span>';}
   }
+    
   else if(action.type==='reset_account'){
     if(confirm('⚠️ Are you sure you want to reset EVERYTHING? This cannot be undone.')){
       S.txs=[];S.debts=[];S.recvs=[];S.habits=[];S.events=[];S.budgets={};S.savings=[];
@@ -1282,7 +1283,7 @@ function executeAIAction(action, msgEl){
       showActionConfirm(msgEl,'✓ Account reset — all data cleared',()=>goTab('dashboard'));
     }else{
       msgEl.innerHTML+='<br><span style="color:var(--gold);font-size:12px">Reset cancelled.</span>';
-  }
+    }
 }
 function showActionConfirm(msgEl, text, onClick){
   const btn=document.createElement('div');
