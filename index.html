@@ -1084,7 +1084,8 @@ Rules:
       })
     });
     const data=await res.json();
-    const fullText=data.text||'Sorry, I had trouble with that.';
+    console.log('AI response:', data);
+const fullText=data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||data.error?.message||'No response.';
 
     // Extract action if present
     const actionMatch=fullText.match(/<ACTION>([\s\S]*?)<\/ACTION>/);
