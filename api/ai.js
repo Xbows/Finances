@@ -10,7 +10,7 @@ export default async function handler(req, res) {
         'X-Title': 'Finances App'
       },
       body: JSON.stringify({
-        model: 'deepseek/deepseek-r1:free',
+        model: 'inclusionai/ring-2.6-1t:free',
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: userMessage }
