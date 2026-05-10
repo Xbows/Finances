@@ -1200,7 +1200,8 @@ function executeAIAction(action, msgEl){
     if(S.tab==='habits')renderHabits();
     showActionConfirm(msgEl, '✓ Habit created — check Habits tab', ()=>goTab('habits'));
   }
-else if(action.type==='delete_debt'){
+  
+  else if(action.type==='delete_debt'){
     const before=S.debts.length;
     S.debts=S.debts.filter(d=>!d.name.toLowerCase().includes(action.name.toLowerCase()));
     if(S.debts.length<before){saveData();if(S.tab==='debts')renderDebts();showActionConfirm(msgEl,'✓ Debt deleted',()=>goTab('debts'));}
@@ -1239,7 +1240,7 @@ else if(action.type==='delete_debt'){
     if(S.habits.length<before){saveData();if(S.tab==='habits')renderHabits();showActionConfirm(msgEl,'✓ Habit deleted',()=>goTab('habits'));}
     else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that habit.</span>';}
   }
-
+}
 function showActionConfirm(msgEl, text, onClick){
   const btn=document.createElement('div');
   btn.style.cssText='margin-top:10px;display:inline-block;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:11px;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:\'DM Mono\',monospace;letter-spacing:.06em';
