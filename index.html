@@ -1031,22 +1031,57 @@ async function sendAI(){
   inp.value='';
   appendAIMsg(msg,'user');
   const typing=appendAIMsg('','ai',true);
+
+  const systemPrompt=`You are an AI finance assistant embedded in a personal finance app.
+${buildFinancialContext()}
+
+You can EXECUTE actions in the app. If the user asks you to add/create/delete something, 
+return a JSON block inside <ACTION></ACTION> tags alongside your reply.
+
+Supported actions:
+- Add a debt: <ACTION>{"type":"add_debt","debtType":"i_owe","name":"Joe Khoury","amount":500,"due":"","desc":""}</ACTION>
+- Add money owed to me: <ACTION>{"type":"add_debt","debtType":"owed_to_me","name":"Sara","amount":200,"due":"","desc":""}</ACTION>
+- Add a transaction: <ACTION>{"type":"add_tx","txType":"expense","amount":50,"category":"Food","desc":"Lunch","date":"${new Date().toISOString().split('T')[0]}"}</ACTION>
+- Add income: <ACTION>{"type":"add_tx","txType":"income","amount":1000,"category":"Salary","desc":"Monthly salary","date":"${new Date().toISOString().split('T')[0]}"}</ACTION>
+- Add savings goal: <ACTION>{"type":"add_saving","name":"Emergency Fund","target":5000,"icon":"🎯","color":"#FF6B00","deadline":""}</ACTION>
+- Add receivable: <ACTION>{"type":"add_recv","name":"Ahmad","amount":300,"due":"","category":"Invoice","desc":""}</ACTION>
+- Set budget: <ACTION>{"type":"set_budget","category":"Food","amount":500}</ACTION>
+- Add habit: <ACTION>{"type":"add_habit","name":"Exercise","icon":"🏃","color":"#4CAF82"}</ACTION>
+
+Rules:
+- Always include the action tag if the user is asking you to add/create/set/log something
+- Fill in all fields from what the user said, leave unknown fields empty string
+- Today's date is ${new Date().toISOString().split('T')[0]}
+- Reply conversationally AND include the action
+- Be concise (2-3 sentences)
+- Amounts are always in USD numbers only`;
+
   try{
     const res=await fetch('/api/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:`You are a sharp, concise AI finance advisor embedded in a personal finance app. ${buildFinancialContext()}`,
-        messages:[{role:'user',content:msg}]
+        system: systemPrompt,
+        userMessage: msg
       })
     });
     const data=await res.json();
-    const text=data.content?.map(b=>b.text||'').join('')||'Sorry, I had trouble processing that.';
-    typing.classList.remove('ai');
-    typing.innerHTML=text.replace(/\n/g,'<br>');
-    typing.classList.add('ai');
+    const fullText=data.text||'Sorry, I had trouble with that.';
+
+    const actionMatch=fullText.match(/<ACTION>([\s\S]*?)<\/ACTION>/);
+    const cleanText=fullText.replace(/<ACTION>[\s\S]*?<\/ACTION>/g,'').trim();
+
+    typing.innerHTML=cleanText.replace(/\n/g,'<br>');
+
+    if(actionMatch){
+      try{
+        const action=JSON.parse(actionMatch[1]);
+        executeAIAction(action, typing);
+      }catch(e){
+        console.error('Action parse error',e);
+      }
+    }
+
   }catch(e){
     typing.innerHTML='Connection error. Make sure you\'re online.';
   }
@@ -1054,20 +1089,94 @@ async function sendAI(){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-function appendAIMsg(text,role,typing=false){
-  const msgs=document.getElementById('ai-messages');
-  const div=document.createElement('div');
-  div.className='ai-msg '+role;
-  div.innerHTML=typing?'<span class="ai-cursor"></span>':text;
-  msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
-  return div;
+function executeAIAction(action, msgEl){
+  const today=new Date().toISOString().split('T')[0];
+
+  if(action.type==='add_debt'){
+    S.debts.unshift({
+      id:Date.now(),
+      name:action.name,
+      amount:parseFloat(action.amount)||0,
+      paid:0,
+      due:action.due||'',
+      type:action.debtType,
+      desc:action.desc||''
+    });
+    saveData();
+    if(S.tab==='debts')renderDebts();
+    showActionConfirm(msgEl,'✓ Debt added — check Debts tab',()=>goTab('debts'));
+  }
+
+  else if(action.type==='add_tx'){
+    S.txs.unshift({
+      id:Date.now(),
+      amount:parseFloat(action.amount)||0,
+      category:action.category||'Other',
+      date:action.date||today,
+      type:action.txType,
+      desc:action.desc||''
+    });
+    saveData();
+    if(S.tab==='transactions')renderTxs();
+    if(S.tab==='dashboard')renderDash();
+    showActionConfirm(msgEl,'✓ Transaction added — check Transactions tab',()=>goTab('transactions'));
+  }
+
+  else if(action.type==='add_saving'){
+    S.savings.push({
+      id:Date.now(),
+      name:action.name,
+      target:parseFloat(action.target)||0,
+      saved:0,
+      deadline:action.deadline||'',
+      icon:action.icon||'🎯',
+      color:action.color||'#FF6B00'
+    });
+    saveData();
+    if(S.tab==='savings')renderSavings();
+    showActionConfirm(msgEl,'✓ Savings goal created — check Savings tab',()=>goTab('savings'));
+  }
+
+  else if(action.type==='add_recv'){
+    S.recvs.unshift({
+      id:Date.now(),
+      name:action.name,
+      amount:parseFloat(action.amount)||0,
+      due:action.due||'',
+      category:action.category||'Other',
+      desc:action.desc||'',
+      received:false,
+      createdAt:today
+    });
+    saveData();
+    if(S.tab==='receivables')renderRecvs();
+    showActionConfirm(msgEl,'✓ Receivable added — check Receivables tab',()=>goTab('receivables'));
+  }
+
+  else if(action.type==='set_budget'){
+    S.budgets[action.category]=parseFloat(action.amount)||0;
+    saveData();
+    if(S.tab==='budget')renderBudget();
+    showActionConfirm(msgEl,'✓ Budget set — check Budget tab',()=>goTab('budget'));
+  }
+
+  else if(action.type==='add_habit'){
+    S.habits.unshift({
+      id:Date.now(),
+      name:action.name,
+      icon:action.icon||'✅',
+      color:action.color||'#4CAF82',
+      log:{}
+    });
+    saveData();
+    if(S.tab==='habits')renderHabits();
+    showActionConfirm(msgEl,'✓ Habit created — check Habits tab',()=>goTab('habits'));
+  }
 }
 
-function aiChip(text){
-  document.getElementById('ai-input').value=text;
-  sendAI();
-}
+function showActionConfirm(msgEl, text, onClick){
+  const btn=document.createElement('div');
+  btn.style.cssText='margin-top:10px;display:inline-block;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:11px;padding:7px 14px;border-radius:20px;cursor:pointer;font-family
 
 let aiOpen=false;
 function toggleAI(){
