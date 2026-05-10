@@ -1194,7 +1194,45 @@ function executeAIAction(action, msgEl){
     if(S.tab==='habits')renderHabits();
     showActionConfirm(msgEl, '✓ Habit created — check Habits tab', ()=>goTab('habits'));
   }
-}
+else if(action.type==='delete_debt'){
+    const before=S.debts.length;
+    S.debts=S.debts.filter(d=>!d.name.toLowerCase().includes(action.name.toLowerCase()));
+    if(S.debts.length<before){saveData();if(S.tab==='debts')renderDebts();showActionConfirm(msgEl,'✓ Debt deleted',()=>goTab('debts'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that debt.</span>';}
+  }
+
+  else if(action.type==='delete_tx'){
+    const before=S.txs.length;
+    S.txs=S.txs.filter(t=>!((t.desc||t.category).toLowerCase().includes(action.name.toLowerCase())));
+    if(S.txs.length<before){saveData();if(S.tab==='transactions')renderTxs();if(S.tab==='dashboard')renderDash();showActionConfirm(msgEl,'✓ Transaction deleted',()=>goTab('transactions'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that transaction.</span>';}
+  }
+
+  else if(action.type==='delete_saving'){
+    const before=S.savings.length;
+    S.savings=S.savings.filter(g=>!g.name.toLowerCase().includes(action.name.toLowerCase()));
+    if(S.savings.length<before){saveData();if(S.tab==='savings')renderSavings();showActionConfirm(msgEl,'✓ Savings goal deleted',()=>goTab('savings'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that goal.</span>';}
+  }
+
+  else if(action.type==='delete_recv'){
+    const before=S.recvs.length;
+    S.recvs=S.recvs.filter(r=>!r.name.toLowerCase().includes(action.name.toLowerCase()));
+    if(S.recvs.length<before){saveData();if(S.tab==='receivables')renderRecvs();showActionConfirm(msgEl,'✓ Receivable deleted',()=>goTab('receivables'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that receivable.</span>';}
+  }
+
+  else if(action.type==='delete_budget'){
+    if(S.budgets[action.category]!==undefined){delete S.budgets[action.category];saveData();if(S.tab==='budget')renderBudget();showActionConfirm(msgEl,'✓ Budget deleted',()=>goTab('budget'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that budget.</span>';}
+  }
+
+  else if(action.type==='delete_habit'){
+    const before=S.habits.length;
+    S.habits=S.habits.filter(h=>!h.name.toLowerCase().includes(action.name.toLowerCase()));
+    if(S.habits.length<before){saveData();if(S.tab==='habits')renderHabits();showActionConfirm(msgEl,'✓ Habit deleted',()=>goTab('habits'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that habit.</span>';}
+  }
 
 function showActionConfirm(msgEl, text, onClick){
   const btn=document.createElement('div');
