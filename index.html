@@ -1012,8 +1012,8 @@ function buildFinancialContext(){
 - Monthly income: ${fmt(s.mInc)}
 - Monthly expenses: ${fmt(s.mExp)}
 - Savings across goals: ${fmt(s.savingsTotal)}
-- Debts I owe: ${fmt(s.iOwe)}
-- Owed to me: ${fmt(s.owedMe)}
+- Debts I owe: ${fmt(s.iOwe)} — names: ${S.debts.filter(d=>d.type==='i_owe').map(d=>d.name).join(', ')||'none'}
+- Owed to me: ${fmt(s.owedMe)} — names: ${S.debts.filter(d=>d.type==='owed_to_me').map(d=>d.name).join(', ')||'none'}
 - Top spending categories: ${top3||'None yet'}
 - Recurring transactions detected: ${recur.length} (${recur.map(r=>r.name).join(', ')||'none'})
 - Spend rate this month: ${s.mInc>0?(s.mExp/s.mInc*100).toFixed(0):0}% of income
