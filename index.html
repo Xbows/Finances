@@ -1020,6 +1020,11 @@ function buildFinancialContext(){
 - Projected month-end balance: ${forecast?fmt(forecast.projected):'not enough data'}
 - Number of savings goals: ${S.savings.length}
 - Active budgets: ${Object.keys(S.budgets).length}
+- Financial health score: ${calcHealthScore()}/100 (${scoreLabel(calcHealthScore())})
+- Savings goal names: ${S.savings.map(g=>g.name).join(', ')||'none'}
+- Receivables pending: ${S.recvs.filter(r=>!r.received).map(r=>r.name).join(', ')||'none'}
+- Budget categories: ${Object.keys(S.budgets).join(', ')||'none'}
+- Habit names: ${S.habits.map(h=>h.name).join(', ')||'none'}
 - Currency: ${S.cur}
 
 Be concise (2-4 sentences max per answer). Use numbers. Be specific. No generic advice.`;
@@ -1071,6 +1076,12 @@ Supported actions:
 - Delete a receivable: <ACTION>{"type":"delete_recv","name":"Ahmad"}</ACTION>
 - Delete a budget: <ACTION>{"type":"delete_budget","category":"Food"}</ACTION>
 - Delete a habit: <ACTION>{"type":"delete_habit","name":"Exercise"}</ACTION>
+- Add calendar event: <ACTION>{"type":"add_event","title":"Meeting","date":"2026-05-15","eventType":"event","notes":""}</ACTION>
+- Add important event: <ACTION>{"type":"add_event","title":"Tax Deadline","date":"2026-05-30","eventType":"important","notes":""}</ACTION>
+- Add reminder: <ACTION>{"type":"add_event","title":"Pay rent","date":"2026-05-01","eventType":"reminder","notes":""}</ACTION>
+- Add payment due: <ACTION>{"type":"add_event","title":"Credit card due","date":"2026-05-20","eventType":"payment","notes":""}</ACTION>
+- Add birthday: <ACTION>{"type":"add_event","title":"Mom's birthday","date":"2026-05-25","eventType":"birthday","notes":""}</ACTION>
+- Delete calendar event: <ACTION>{"type":"delete_event","title":"Meeting"}</ACTION>
 
 Rules:
 - Always include the action tag if the user is asking you to add/create/set/log something
@@ -1240,6 +1251,25 @@ function executeAIAction(action, msgEl){
     S.habits=S.habits.filter(h=>!h.name.toLowerCase().includes(action.name.toLowerCase()));
     if(S.habits.length<before){saveData();if(S.tab==='habits')renderHabits();showActionConfirm(msgEl,'✓ Habit deleted',()=>goTab('habits'));}
     else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that habit.</span>';}
+  }
+  else if(action.type==='add_event'){
+    S.events.unshift({
+      id:Date.now(),
+      title:action.title,
+      date:action.date,
+      type:action.eventType||'event',
+      notes:action.notes||''
+    });
+    saveData();
+    if(S.tab==='calendar')renderCalendar();
+    showActionConfirm(msgEl,'✓ Event added — check Calendar tab',()=>goTab('calendar'));
+  }
+
+  else if(action.type==='delete_event'){
+    const before=S.events.length;
+    S.events=S.events.filter(e=>!e.title.toLowerCase().includes(action.title.toLowerCase()));
+    if(S.events.length<before){saveData();if(S.tab==='calendar')renderCalendar();showActionConfirm(msgEl,'✓ Event deleted',()=>goTab('calendar'));}
+    else{msgEl.innerHTML+='<br><span style="color:var(--red);font-size:12px">Could not find that event.</span>';}
   }
 }
 function showActionConfirm(msgEl, text, onClick){
