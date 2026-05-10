@@ -10,7 +10,7 @@ export default async function handler(req, res) {
         'X-Title': 'Finances App'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-8b-instruct:free',
+        model: 'meta-llama/llama-4-scout:free',
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: userMessage }
