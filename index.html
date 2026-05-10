@@ -1033,6 +1033,16 @@ function toggleAI(){
   if(aiOpen)setTimeout(()=>document.getElementById('ai-input').focus(),300);
 }
 
+function appendAIMsg(text,role,typing=false){
+  const msgs=document.getElementById('ai-messages');
+  const div=document.createElement('div');
+  div.className='ai-msg '+role;
+  div.innerHTML=typing?'<span class="ai-cursor"></span>':text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
 async function sendAI(){
   const inp=document.getElementById('ai-input');
   const msg=inp.value.trim();if(!msg)return;
