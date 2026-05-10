@@ -1024,6 +1024,14 @@ function buildFinancialContext(){
 
 Be concise (2-4 sentences max per answer). Use numbers. Be specific. No generic advice.`;
 }
+ 
+let aiOpen=false;
+function toggleAI(){
+  aiOpen=!aiOpen;
+  document.getElementById('ai-panel').classList.toggle('open',aiOpen);
+  document.getElementById('ai-overlay').classList.toggle('open',aiOpen);
+  if(aiOpen)setTimeout(()=>document.getElementById('ai-input').focus(),300);
+}
 
 async function sendAI(){
   const inp=document.getElementById('ai-input');
