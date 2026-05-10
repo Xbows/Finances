@@ -1077,9 +1077,11 @@ Rules:
 - Fill in all fields from what the user said, leave unknown fields empty string
 - Today's date is ${new Date().toISOString().split('T')[0]}
 - Reply conversationally AND include the action
+- NEVER show the ACTION tag in your reply text, it must be invisible to the user
+- Use the EXACT name as it appears in the user's data when deleting
 - Be concise (2-3 sentences)
 - Amounts are always in USD numbers only`;
-
+ 
   try{
     const res=await fetch('/api/ai',{
       method:'POST',
@@ -1094,9 +1096,8 @@ Rules:
 const fullText=data.text||data.candidates?.[0]?.content?.parts?.[0]?.text||data.error?.message||'No response.';
 
     // Extract action if present
-    const actionMatch=fullText.match(/<ACTION>([\s\S]*?)<\/ACTION>/);
-    const cleanText=fullText.replace(/<ACTION>[\s\S]*?<\/ACTION>/g,'').trim();
-
+    const actionMatch=fullText.match(/<ACTION>([\s\S]*?)<\/ACTION>/i);
+    const cleanText=fullText.replace(/<ACTION>[\s\S]*?<\/ACTION>/gi,'').replace(/ACTION>\{[^}]*\}/g,'').trim();
     // Update message
     typing.innerHTML=cleanText.replace(/\n/g,'<br>');
 
