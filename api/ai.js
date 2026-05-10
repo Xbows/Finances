@@ -3,52 +3,40 @@ export default async function handler(req, res) {
     const { system, userMessage } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // 1. Check if the API key exists to avoid "not found" errors caused by missing auth
+    // 1. Safety Check: If the key is missing, Google returns a 404 on the endpoint
     if (!apiKey) {
-      return res.status(500).json({ text: "Error: GEMINI_API_KEY is missing from environment variables." });
+      return res.status(500).json({ text: "Error: GEMINI_API_KEY is not defined in your environment variables." });
     }
 
-    // 2. Use 'v1beta' and append '-latest' to the model name. 
-    // This is currently the most successful endpoint for Gemini 1.5 Flash.
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // 2. The most stable configuration for AI Studio keys:
+    // API Version: v1beta
+    // Model Name: gemini-1.5-flash (no '-latest' suffix)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: `${system}\n\n${userMessage}` }
-            ]
-          }
-        ]
+        contents: [{ 
+          parts: [{ text: `${system}\n\n${userMessage}` }] 
+        }]
       })
     });
 
     const data = await response.json();
 
+    // 3. Detailed Error Handling
     if (data.error) {
-      // This will tell us if it's a 403 (Region block), 401 (Bad Key), etc.
       return res.status(data.error.code || 500).json({ 
-        text: `API Error (${data.error.code}): ${data.error.message}` 
+        text: `Google API Error (${data.error.code}): ${data.error.message}`,
+        suggestion: "If you see 404, your API key might be for Vertex AI instead of AI Studio, or your region is restricted."
       });
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (text) {
-      res.status(200).json({ text });
-    } else {
-      res.status(200).json({ 
-        text: "The model did not return a response. Check the debug data.",
-        debug: JSON.stringify(data) 
-      });
-    }
+    res.status(200).json({ text: text || "The model returned an empty response." });
 
   } catch (e) {
-    res.status(500).json({ text: 'Internal Server Error: ' + e.message });
+    res.status(500).json({ text: 'Server Crash: ' + e.message });
   }
 }
